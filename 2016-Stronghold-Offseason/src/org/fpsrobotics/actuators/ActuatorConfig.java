@@ -179,7 +179,7 @@ public class ActuatorConfig
 			CANTalon shooterLifterTalon = new CANTalon(LINEAR_ACTUATOR_MOTOR);
 			
 			// Instantiate shooter lifter
-			shooterLifter = new DartLinearActuator(new CANMotor(shooterLifterTalon, false), shooterPotentiometer, false, LOWER_SHOOTER_LIMIT, UPPER_SHOOTER_LIMIT);
+			shooterLifter = new DartLinearActuator(new CANMotor(shooterLifterTalon, true), shooterPotentiometer, false, LOWER_SHOOTER_LIMIT, UPPER_SHOOTER_LIMIT);
 			
 			// Instantiate the shooter
 			launcher = new MullenatorShooter(leftShooter, rightShooter, shooterLifter, shooterSolenoid, isAlpha);

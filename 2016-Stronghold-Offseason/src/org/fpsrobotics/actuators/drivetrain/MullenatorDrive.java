@@ -199,6 +199,7 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 
 	private double slowDistance = 200;
 	private double slowSpeedDriving = 0.2; // get units correct for velocity
+	private int steps = 5;
 
 	@Override
 	public void driveAtProfile(double[] profileSetting, DriveTrainProfile profile)
@@ -255,12 +256,12 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 				initialLeft = leftSpeed;
 
 				rightSpeed = rightDrive.getSpeed();
-				initialLeft = rightSpeed;
+				initialRight = rightSpeed;
 
-				for (int i = 0; i < 5; i++)
+				for (int i = 0; i < steps; i++)
 				{
-					leftSpeed += (profileSetting[0] - initialLeft) / 5;
-					rightSpeed += (profileSetting[1] - initialRight) / 5;
+					leftSpeed += (profileSetting[0] - initialLeft) / steps;
+					rightSpeed += (profileSetting[1] - initialRight) / steps;
 
 					leftDrive.setSpeed(leftSpeed);
 					rightDrive.setSpeed(rightSpeed);
@@ -320,12 +321,12 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 			initialLeft = leftSpeed;
 
 			rightSpeed = rightDrive.getSpeed();
-			initialLeft = rightSpeed;
+			initialRight = rightSpeed;
 
-			for (int i = 0; i < 5; i++)
+			for (int i = 0; i < steps; i++)
 			{
-				leftSpeed -= initialLeft / 5;
-				rightSpeed -= initialRight / 5;
+				leftSpeed -= initialLeft / steps;
+				rightSpeed -= initialRight / steps;
 
 				leftDrive.setSpeed(leftSpeed);
 				rightDrive.setSpeed(rightSpeed);

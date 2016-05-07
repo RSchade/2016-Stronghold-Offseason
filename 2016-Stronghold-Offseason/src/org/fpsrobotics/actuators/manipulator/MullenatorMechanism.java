@@ -9,7 +9,7 @@ public class MullenatorMechanism
 	private MullenatorLifter lifter;
 	private MullenatorShooter shooter;
 
-	private int AUGER_VALUE_WILL_HIT_SHOOTER;
+	private int AUGER_VALUE_WILL_HIT_SHOOTER = 670;
 
 	ExecutorService executor;
 
@@ -154,7 +154,7 @@ public class MullenatorMechanism
 	{
 		if (shooter.getPosition() <= AUGER_VALUE_WILL_HIT_SHOOTER)
 		{
-			shooter.stop();
+			stopShooter();
 		} else
 		{
 			shooter.goUp();

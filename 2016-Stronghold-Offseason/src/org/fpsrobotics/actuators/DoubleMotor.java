@@ -193,6 +193,8 @@ public class DoubleMotor implements ICANMotor
 		return CANMotorTwo;
 	}
 
+	int steps = 5;
+	
 	@Override
 	public void rampTo(double speed)
 	{
@@ -203,9 +205,9 @@ public class DoubleMotor implements ICANMotor
 			rampSpeed = getSpeed();
 			initialSpeed = rampSpeed;
 
-			for (int i = 0; i < 100; i++)
+			for (int i = 0; i < steps; i++)
 			{
-				rampSpeed += (speed - initialSpeed) / 100;
+				rampSpeed += (speed - initialSpeed) / steps;
 
 				setSpeed(speed);
 
@@ -215,6 +217,7 @@ public class DoubleMotor implements ICANMotor
 				} catch (InterruptedException e)
 				{
 					stop();
+					return;
 				}
 			}
 		} else

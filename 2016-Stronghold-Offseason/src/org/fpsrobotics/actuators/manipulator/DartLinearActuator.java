@@ -106,7 +106,7 @@ public class DartLinearActuator implements ILinearActuator
 	{
 		if(Thread.interrupted())
 		{
-			screwMotor.rampDown();
+			stop();
 			return;
 		}
 		
@@ -141,7 +141,7 @@ public class DartLinearActuator implements ILinearActuator
 	{
 		if(Thread.interrupted())
 		{
-			screwMotor.rampDown();
+			stop();
 			return;
 		}
 		
