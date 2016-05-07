@@ -257,28 +257,28 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 				rightSpeed = rightDrive.getSpeed();
 				initialLeft = rightSpeed;
 
-				for (int i = 0; i < 100; i++)
+				for (int i = 0; i < 5; i++)
 				{
-					leftSpeed += (profileSetting[0] - initialLeft) / 100;
-					rightSpeed += (profileSetting[1] - initialRight) / 100;
+					leftSpeed += (profileSetting[0] - initialLeft) / 5;
+					rightSpeed += (profileSetting[1] - initialRight) / 5;
 
-					drive(leftSpeed, rightSpeed);
+					leftDrive.setSpeed(leftSpeed);
+					rightDrive.setSpeed(rightSpeed);
 
 					try
 					{
 						Thread.sleep(3); // wait at least 3 milliseconds
 					} catch (InterruptedException e)
 					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						leftDrive.stop();
+						rightDrive.stop();
 					}
 				}
 			} else
 			{
-				drive(profileSetting[0], profileSetting[1]);
+				leftDrive.setSpeed(profileSetting[0]);
+				rightDrive.setSpeed(profileSetting[1]);
 			}
-			
-			System.err.println("Velocity mode used"); // testing
 
 			break;
 
@@ -322,24 +322,22 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 			rightSpeed = rightDrive.getSpeed();
 			initialLeft = rightSpeed;
 
-			for (int i = 0; i < 100; i++)
+			for (int i = 0; i < 5; i++)
 			{
-				leftSpeed -= initialLeft / 100;
-				rightSpeed -= initialRight / 100;
+				leftSpeed -= initialLeft / 5;
+				rightSpeed -= initialRight / 5;
 
-				drive(leftSpeed, rightSpeed);
+				leftDrive.setSpeed(leftSpeed);
+				rightDrive.setSpeed(rightSpeed);
 
 				try
 				{
 					Thread.sleep(3); // wait at least 3 milliseconds
 				} catch (InterruptedException e)
 				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					
 				}
 			}
-
-			System.err.println("Velocity mode stop used"); // testing
 
 			break;
 

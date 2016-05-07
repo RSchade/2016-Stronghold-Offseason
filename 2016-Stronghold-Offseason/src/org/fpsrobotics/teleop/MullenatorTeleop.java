@@ -274,12 +274,35 @@ public class MullenatorTeleop implements ITeleopControl
 			{
 				executor.submit(() ->
 				{
-					gyroTask.cancel(true);
-					shooterTask.cancel(true);
-					intakeTask.cancel(true);
-					presetTask.cancel(true);
-					shotTask.cancel(true);
-					lifterTask.cancel(true);
+					if(gyroTask != null)
+					{
+						gyroTask.cancel(true);
+					}
+					
+					if(shooterTask != null)
+					{
+						shooterTask.cancel(true);
+					}
+					
+					if(intakeTask != null)
+					{
+						intakeTask.cancel(true);
+					}
+				
+					if(presetTask != null)
+					{
+						presetTask.cancel(true);
+					}
+					
+					if(shotTask != null)
+					{
+						shotTask.cancel(true);
+					}
+					
+					if(lifterTask != null)
+					{
+						lifterTask.cancel(true);
+					}
 				});
 			}
 
@@ -322,12 +345,39 @@ public class MullenatorTeleop implements ITeleopControl
 	@Override
 	public void interruptTeleop()
 	{
-		gyroTask.cancel(true);
-		shooterTask.cancel(true);
-		intakeTask.cancel(true);
-		presetTask.cancel(true);
-		shotTask.cancel(true);
-		lifterTask.cancel(true);
-		//driveTask.cancel(true); don't interrupt manual driving for now...
+		if(gyroTask != null)
+		{
+			gyroTask.cancel(true);
+		}
+		
+		if(shooterTask != null)
+		{
+			shooterTask.cancel(true);
+		}
+		
+		if(intakeTask != null)
+		{
+			intakeTask.cancel(true);
+		}
+	
+		if(presetTask != null)
+		{
+			presetTask.cancel(true);
+		}
+		
+		if(shotTask != null)
+		{
+			shotTask.cancel(true);
+		}
+		
+		if(lifterTask != null)
+		{
+			lifterTask.cancel(true);
+		}
+		
+		if(driveTask != null)
+		{
+			driveTask.cancel(true);
+		}
 	}
 }

@@ -105,7 +105,7 @@ public class CANMotor implements ICANMotor
 	{
 		if (Thread.interrupted())
 		{
-			rampDown();
+			stop();
 			return;
 		}
 		

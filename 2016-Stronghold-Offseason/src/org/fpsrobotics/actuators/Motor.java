@@ -51,7 +51,7 @@ public class Motor implements IMotor
 	{
 		if (Thread.interrupted())
 		{
-			rampDown();
+			stop();
 			return;
 		}
 		
@@ -103,7 +103,7 @@ public class Motor implements IMotor
 					Thread.sleep(2); // wait at least 2 milliseconds
 				} catch (InterruptedException e)
 				{
-					rampDown();
+					stop();
 					return;
 				}
 			}

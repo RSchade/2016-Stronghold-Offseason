@@ -20,10 +20,6 @@ public class SensorConfig
 	private ILimitSwitch shooterBottomLimitSwitch;
 	private ILimitSwitch shooterTopLimitSwitch;
 
-	// Auger Limits
-	private final int AUGER_BOTTOM_LIMIT_SWITCH = 2;
-	private final int AUGER_TOP_LIMIT_SWITCH = 3;
-
 	// Camera
 	private final String CAMERA_USB_PORT = "cam0";
 	private ICamera cameraOne;
@@ -141,16 +137,6 @@ public class SensorConfig
 	public ILimitSwitch getShooterTopLimitSwitch()
 	{
 		return shooterTopLimitSwitch;
-	}
-
-	public ILimitSwitch getAugerBottomLimitSwitch()
-	{
-		return augerBottomLimitSwitch;
-	}
-
-	public ILimitSwitch getAugerTopLimitSwitch()
-	{
-		return augerTopLimitSwitch;
 	}
 
 	public IGyroscope getGyro()

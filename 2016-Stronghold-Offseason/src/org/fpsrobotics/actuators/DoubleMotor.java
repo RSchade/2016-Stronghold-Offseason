@@ -214,7 +214,7 @@ public class DoubleMotor implements ICANMotor
 					Thread.sleep(2); // wait at least 2 milliseconds
 				} catch (InterruptedException e)
 				{
-					rampDown();
+					stop();
 				}
 			}
 		} else
