@@ -21,7 +21,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class MullenatorTeleop implements ITeleopControl
 {
 	private ExecutorService executor;
-	
+
 	private boolean autoGyroDriveActivated = false;
 
 	// Instances
@@ -31,18 +31,21 @@ public class MullenatorTeleop implements ITeleopControl
 	private IJoystick rightJoystick;
 	private MullenatorMechanism mechanism;
 
-	private Future<?> driveTask, gyroTask, shooterTask, intakeTask, presetTask, shotTask, lifterTask, semiAutoTask;
+	private Future<?> driveTask, shooterTask, intakeTask, presetTask, shotTask, lifterTask, semiAutoTask,
+			smartDashboardTask;
 
 	private ActuatorConfig actuators;
 	private SensorConfig sensors;
-	
+
 	private ISemiAutonomousMode chevalSemiAuto;
+
+	private int shooterDelay = 5;
 
 	// Auto Teleop
 
 	public MullenatorTeleop()
 	{
-		executor = Executors.newFixedThreadPool(6); // Maximum 6 concurrent
+		executor = Executors.newFixedThreadPool(4); // Maximum 4 concurrent
 													// tasks
 
 		// Instances
@@ -55,9 +58,11 @@ public class MullenatorTeleop implements ITeleopControl
 
 		actuators = ActuatorConfig.getInstance();
 		sensors = SensorConfig.getInstance();
-		
+
 		chevalSemiAuto = new AutonChevalDeFrise();
 	}
+
+	double joystickCuttoff = 0.01;
 
 	@Override
 	public void doTeleop()
@@ -67,32 +72,70 @@ public class MullenatorTeleop implements ITeleopControl
 		{
 			while (RobotStatus.isTeleop())
 			{
-				driveTrain.drive(leftJoystick.getY(), rightJoystick.getY());
+				if (rightJoystick.getButtonValue(EJoystickButtons.ONE))
+				{
+					SmartDashboard.putBoolean("DRIVE TOGETHER", true);
+
+					SensorConfig.getInstance().getGyro().softResetCount();
+
+					while (rightJoystick.getButtonValue(EJoystickButtons.ONE))
+					{
+						double joyValue = rightJoystick.getY();
+
+						if (joyValue > 0)
+						{
+							driveTrain.drive(joyValue, joyValue);
+							//driveTrain.driveForward(joyValue);
+						} else if (joyValue < 0)
+						{
+							driveTrain.drive(joyValue, joyValue);
+							//driveTrain.driveBackward(joyValue);
+						} else
+						{
+							driveTrain.stop();
+						}
+
+						try
+						{
+							Thread.sleep(5);
+						} catch (Exception e)
+						{
+							
+						}
+					}
+					SmartDashboard.putBoolean("DRIVE TOGETHER", false);
+				}
+				
+				double leftDrive = leftJoystick.getY(), rightDrive = rightJoystick.getY();
+
+				if (Math.abs(leftDrive) > joystickCuttoff && Math.abs(rightDrive) > joystickCuttoff)
+				{
+					driveTrain.drive(leftDrive, rightDrive);
+				} else if (Math.abs(leftDrive) < joystickCuttoff && Math.abs(rightDrive) < joystickCuttoff)
+				{
+					driveTrain.stop();
+				} else if (Math.abs(leftDrive) < joystickCuttoff)
+				{
+					driveTrain.drive(0.0, rightDrive);
+				} else if (Math.abs(rightDrive) < joystickCuttoff)
+				{
+					driveTrain.drive(leftDrive, 0.0);
+				}
 
 				try
 				{
 					Thread.sleep(50);
 				} catch (Exception e1)
 				{
-					
-				}
 
-				while (autoGyroDriveActivated)
-				{
-					try
-					{
-						Thread.sleep(150);
-					} catch (Exception e)
-					{
-						
-					}
 				}
 			}
 		});
 
 		while (RobotStatus.isTeleop())
 		{
-			// Driver Side
+			/*
+			// Drive straight
 			if (rightJoystick.getButtonValue(EJoystickButtons.ONE) && (gyroTask == null || gyroTask.isDone()))
 			{
 				gyroTask = executor.submit(() ->
@@ -104,29 +147,33 @@ public class MullenatorTeleop implements ITeleopControl
 
 					while (rightJoystick.getButtonValue(EJoystickButtons.ONE))
 					{
-						double joyValue = rightJoystick.getY();
-						
-						if(joyValue > 0)
+						double joyValue = -rightJoystick.getY(); // inverted joystick
+
+						if (joyValue > 0)
 						{
 							driveTrain.driveForward(joyValue);
-						} else
+						} else if (joyValue < 0)
 						{
 							driveTrain.driveBackward(joyValue);
+						} else
+						{
+							driveTrain.stop();
 						}
-						
+
 						try
 						{
-							Thread.sleep(50);
+							Thread.sleep(5);
 						} catch (Exception e)
 						{
 							break;
 						}
 					}
-					
+
 					autoGyroDriveActivated = false;
 					SmartDashboard.putBoolean("DRIVE TOGETHER", false);
 				});
 			}
+			*/
 
 			// Manual Shooter
 			if (gamepad.getButtonValue(EJoystickButtons.ONE) && (shooterTask == null || shooterTask.isDone()))
@@ -139,7 +186,7 @@ public class MullenatorTeleop implements ITeleopControl
 
 						try
 						{
-							Thread.sleep(50);
+							Thread.sleep(shooterDelay);
 						} catch (Exception e)
 						{
 							break;
@@ -152,13 +199,40 @@ public class MullenatorTeleop implements ITeleopControl
 
 						try
 						{
-							Thread.sleep(50);
+							Thread.sleep(shooterDelay);
 						} catch (Exception e)
 						{
 							break;
 						}
 					}
 
+					while (gamepad.getButtonValue(EJoystickButtons.FIVE))
+					{
+						mechanism.moveAugerUp();
+
+						try
+						{
+							Thread.sleep(shooterDelay);
+						} catch (Exception e)
+						{
+							break;
+						}
+					}
+
+					while (gamepad.getButtonValue(EJoystickButtons.SIX))
+					{
+						mechanism.moveAugerDown();
+
+						try
+						{
+							Thread.sleep(shooterDelay);
+						} catch (Exception e)
+						{
+							break;
+						}
+					}
+
+					mechanism.stopAuger();
 					mechanism.stopShooter();
 				});
 			}
@@ -208,7 +282,7 @@ public class MullenatorTeleop implements ITeleopControl
 
 						try
 						{
-							Thread.sleep(50);
+							Thread.sleep(5);
 						} catch (Exception e)
 						{
 							break;
@@ -266,74 +340,75 @@ public class MullenatorTeleop implements ITeleopControl
 					}
 				});
 			}
-					
-			
-			
+
 			// Abort button
 			if (rightJoystick.getButtonValue(EJoystickButtons.ELEVEN))
 			{
 				executor.submit(() ->
 				{
-					if(gyroTask != null)
-					{
-						gyroTask.cancel(true);
-					}
-					
-					if(shooterTask != null)
+					if (shooterTask != null)
 					{
 						shooterTask.cancel(true);
 					}
-					
-					if(intakeTask != null)
+
+					if (intakeTask != null)
 					{
 						intakeTask.cancel(true);
 					}
-				
-					if(presetTask != null)
+
+					if (presetTask != null)
 					{
 						presetTask.cancel(true);
 					}
-					
-					if(shotTask != null)
+
+					if (shotTask != null)
 					{
 						shotTask.cancel(true);
 					}
-					
-					if(lifterTask != null)
+
+					if (lifterTask != null)
 					{
 						lifterTask.cancel(true);
 					}
 				});
+
+				while (rightJoystick.getButtonValue(EJoystickButtons.ELEVEN))
+				{
+
+				}
 			}
 
 			// SmartDashboard update
-			executor.submit(() ->
+			if (smartDashboardTask == null || smartDashboardTask.isDone())
 			{
-				// Shooter Pot Value
-				SmartDashboard.putNumber("Shooter Pot", actuators.getShooterPotentiometer().getCount());
-
-				// Pressure sensor feedback
-				SmartDashboard.putBoolean("Pressure", sensors.getPressureSwitch().isHit());
-
-				// Auger Pot Value
-				SmartDashboard.putNumber("Auger Pot", actuators.getAugerPotentiometer().getCount());
-
-				// Compass or gyro
-				SmartDashboard.putNumber("Soft Count", sensors.getGyro().getSoftCount());
-				SmartDashboard.putNumber("Hard Count", sensors.getGyro().getHardCount());
-
-				if ((-10 < sensors.getGyro().getSoftCount()) && ((sensors.getGyro().getSoftCount() < 10)))
+				executor.submit(() ->
 				{
-					SmartDashboard.putBoolean("Are we Straight?", true);
-				} else
-				{
-					SmartDashboard.putBoolean("Are we Straight?", false);
-				}
-			});
+					// Shooter Pot Value
+					SmartDashboard.putNumber("Shooter Pot", actuators.getShooterPotentiometer().getCount());
+
+					// Pressure sensor feedback
+					SmartDashboard.putBoolean("Pressure", sensors.getPressureSwitch().isHit());
+
+					// Auger Pot Value
+					SmartDashboard.putNumber("Auger Pot", actuators.getAugerPotentiometer().getCount());
+
+					// Compass or gyro
+					SmartDashboard.putNumber("Soft Count", sensors.getGyro().getSoftCount());
+					SmartDashboard.putNumber("Hard Count", sensors.getGyro().getHardCount());
+
+					if ((-10 < sensors.getGyro().getSoftCount()) && ((sensors.getGyro().getSoftCount() < 10)))
+					{
+						SmartDashboard.putBoolean("Are we Straight?", true);
+					} else
+					{
+						SmartDashboard.putBoolean("Are we Straight?", false);
+					}
+				});
+			}
 
 			try
 			{
-				Thread.sleep(75);
+				Thread.sleep(150);
 			} catch (InterruptedException e)
 			{
 
@@ -345,37 +420,32 @@ public class MullenatorTeleop implements ITeleopControl
 	@Override
 	public void interruptTeleop()
 	{
-		if(gyroTask != null)
-		{
-			gyroTask.cancel(true);
-		}
-		
-		if(shooterTask != null)
+		if (shooterTask != null)
 		{
 			shooterTask.cancel(true);
 		}
-		
-		if(intakeTask != null)
+
+		if (intakeTask != null)
 		{
 			intakeTask.cancel(true);
 		}
-	
-		if(presetTask != null)
+
+		if (presetTask != null)
 		{
 			presetTask.cancel(true);
 		}
-		
-		if(shotTask != null)
+
+		if (shotTask != null)
 		{
 			shotTask.cancel(true);
 		}
-		
-		if(lifterTask != null)
+
+		if (lifterTask != null)
 		{
 			lifterTask.cancel(true);
 		}
-		
-		if(driveTask != null)
+
+		if (driveTask != null)
 		{
 			driveTask.cancel(true);
 		}

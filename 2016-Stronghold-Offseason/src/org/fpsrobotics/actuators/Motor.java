@@ -39,10 +39,22 @@ public class Motor implements IMotor
 	{
 		if (device == null)
 		{
-			return motor.get();
+			if(isInverted)
+			{
+				return -motor.get();
+			} else
+			{
+				return motor.get();
+			}
 		} else
 		{
-			return device.getRate();
+			if(isInverted)
+			{
+				return -device.getRate();
+			} else
+			{
+				return device.getRate();
+			}
 		}
 	}
 
@@ -134,6 +146,37 @@ public class Motor implements IMotor
 			{
 
 			}
+		}
+	}
+
+	@Override
+	public void rampTo(double speed, int steps)
+	{
+		if (getSpeed() != speed)
+		{
+			double rampSpeed, initialSpeed = 0;
+
+			rampSpeed = getSpeed();
+			initialSpeed = rampSpeed;
+
+			for (int i = 0; i < 100; i++)
+			{
+				rampSpeed += (speed - initialSpeed) / 100;
+
+				setSpeed(speed);
+
+				try
+				{
+					Thread.sleep(2); // wait at least 2 milliseconds
+				} catch (InterruptedException e)
+				{
+					stop();
+					return;
+				}
+			}
+		} else
+		{
+			setSpeed(speed);
 		}
 	}
 }

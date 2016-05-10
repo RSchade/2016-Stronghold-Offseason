@@ -21,10 +21,9 @@ public class SensorConfig
 	private ILimitSwitch shooterTopLimitSwitch;
 
 	// Camera
-	private final String CAMERA_USB_PORT = "cam0";
-	private ICamera cameraOne;
+	//private final String CAMERA_USB_PORT = "cam0";
+	//private ICamera cameraOne;
 
-	// Pressure Guage
 	private final int PRESSURE_SWITCH_CHANNEL = 9;
 	private ILimitSwitch pressureSwitch;
 
@@ -84,9 +83,9 @@ public class SensorConfig
 
 		pdp = new PowerDistributionPanel();
 
-		cameraOne = new MicrosoftLifeCam(CAMERA_USB_PORT);
+		//cameraOne = new MicrosoftLifeCam(CAMERA_USB_PORT);
 
-		cameraOne.enable();
+		//cameraOne.enable();
 
 		accelNavX = new AccelerometerNavX(ahrs);
 		

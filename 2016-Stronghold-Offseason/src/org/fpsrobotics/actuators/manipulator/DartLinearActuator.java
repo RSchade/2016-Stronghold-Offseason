@@ -8,15 +8,17 @@ public class DartLinearActuator implements ILinearActuator
 	private IMotor screwMotor;
 	private IPIDFeedbackDevice pot;
 	private boolean isUpAPositiveSlope = true;
-	int topLimit, bottomLimit;
+	int topLimit, bottomLimit, slowBuffer, steps;
 	
-	public DartLinearActuator(IMotor screwMotor, IPIDFeedbackDevice pot, boolean isUpAPositiveSlope, int topLimit, int bottomLimit)
+	public DartLinearActuator(IMotor screwMotor, IPIDFeedbackDevice pot, boolean isUpAPositiveSlope, int bottomLimit, int topLimit, int slowBuffer, int rampSteps)
 	{
 		this.screwMotor = screwMotor;
 		this.pot = pot;
 		this.isUpAPositiveSlope = isUpAPositiveSlope;
 		this.topLimit = topLimit;
 		this.bottomLimit = bottomLimit;
+		this.slowBuffer = slowBuffer;
+		this.steps = rampSteps;
 	}
 	
 	@Override
@@ -30,8 +32,6 @@ public class DartLinearActuator implements ILinearActuator
 	{
 		goToPosition(speed, bottomLimit);
 	}
-
-	int slowBuffer = 100;
 	
 	@Override
 	public void goToPosition(double speed, int position)
@@ -119,7 +119,7 @@ public class DartLinearActuator implements ILinearActuator
 		{
 			if(!(pot.getCount() > topLimit - deadZone))
 			{
-				screwMotor.rampTo(speed);
+				screwMotor.rampTo(speed, steps);
 			} else
 			{
 				stop();
@@ -128,7 +128,7 @@ public class DartLinearActuator implements ILinearActuator
 		{
 			if(!(pot.getCount() < topLimit + deadZone))
 			{
-				screwMotor.rampTo(speed);
+				screwMotor.rampTo(speed, steps);
 			} else
 			{
 				stop();
@@ -154,7 +154,7 @@ public class DartLinearActuator implements ILinearActuator
 		{
 			if(!(pot.getCount() < bottomLimit + deadZone))
 			{
-				screwMotor.rampTo(speed);
+				screwMotor.rampTo(speed, steps);
 			} else
 			{
 				stop();
@@ -163,7 +163,7 @@ public class DartLinearActuator implements ILinearActuator
 		{
 			if(!(pot.getCount() > bottomLimit - deadZone))
 			{
-				screwMotor.rampTo(speed);
+				screwMotor.rampTo(speed, steps);
 			} else
 			{
 				stop();

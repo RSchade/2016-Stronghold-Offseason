@@ -14,4 +14,6 @@ public interface IMotor
 	public void rampTo(double speed);
 	
 	public void rampDown();
+	
+	public void rampTo(double speed, int steps);
 }

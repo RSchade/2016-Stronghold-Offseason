@@ -250,4 +250,35 @@ public class DoubleMotor implements ICANMotor
 		}
 	}
 
+	@Override
+	public void rampTo(double speed, int steps)
+	{
+		if (getSpeed() != speed)
+		{
+			double rampSpeed, initialSpeed = 0;
+
+			rampSpeed = getSpeed();
+			initialSpeed = rampSpeed;
+
+			for (int i = 0; i < steps; i++)
+			{
+				rampSpeed += (speed - initialSpeed) / steps;
+
+				setSpeed(speed);
+
+				try
+				{
+					Thread.sleep(2); // wait at least 2 milliseconds
+				} catch (InterruptedException e)
+				{
+					stop();
+					return;
+				}
+			}
+		} else
+		{
+			setSpeed(speed);
+		}
+	}
+
 }

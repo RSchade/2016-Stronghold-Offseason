@@ -58,7 +58,10 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 			System.err.println("Negative Speed on Drive Forward");
 			speed = -speed;
 		}
-
+		
+		driveUsingGyro(speed, gyro.getHardCount() * KpTeleop);
+		
+		/*
 		if (gyroExists)
 		{
 			// Figure out why this works, and in what configuration of
@@ -69,6 +72,7 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 			// drive(speed, speed);
 			stop(); // testing
 		}
+		*/
 	}
 
 	@Override
@@ -79,7 +83,10 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 			System.err.println("Negative Speed on Drive Backward");
 			speed = -speed;
 		}
-
+		
+		driveUsingGyro(-speed, -gyro.getHardCount() * KpTeleop);
+		
+		/*
 		if (gyroExists)
 		{
 			// Figure out why this works, and in what configuration of
@@ -90,6 +97,7 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 			// drive(-speed, -speed);
 			stop(); // testing
 		}
+		*/
 	}
 
 	private final double m_sensitivity = 0.5;
@@ -124,7 +132,8 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 			rightOutput = outputMagnitude;
 		}
 
-		driveAtSpecifiedProfile(new double[] { leftOutput, rightOutput });
+		drive(leftOutput, rightOutput);
+		//driveAtSpecifiedProfile(new double[] { leftOutput, rightOutput });
 	}
 
 	private double rampDownAngleDifference = 5;
@@ -199,7 +208,7 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 
 	private double slowDistance = 200;
 	private double slowSpeedDriving = 0.2; // get units correct for velocity
-	private int steps = 5;
+	private int steps = 7;
 
 	@Override
 	public void driveAtProfile(double[] profileSetting, DriveTrainProfile profile)

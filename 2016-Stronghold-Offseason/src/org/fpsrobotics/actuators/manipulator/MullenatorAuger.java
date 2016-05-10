@@ -11,11 +11,11 @@ public class MullenatorAuger implements IAuger
 
 	int FOURTY_KAI, INTAKE_AUGER, STANDARD_DEFENSE_AUGER, BOTTOM_LIMIT_AUGER, TOP_LIMIT_AUGER;
 
-	private double UP_FAST_ZONE_SPEED = 0.8;
+	private double UP_FAST_ZONE_SPEED = 0.6;
 	private double UP_SPEED = 0.5;
 	
-	private double DOWN_FAST_ZONE_SPEED = 0.5;
-	private double DOWN_SPEED = 0.5;
+	private double DOWN_FAST_ZONE_SPEED = 0.2;
+	private double DOWN_SPEED = 0.2;
 
 	private int UP_FAST_ZONE_VALUE;
 	private int DOWN_FAST_ZONE_VALUE;
@@ -32,7 +32,7 @@ public class MullenatorAuger implements IAuger
 			BOTTOM_LIMIT_AUGER = 546;
 			FOURTY_KAI = 1400; // Used for High Shot Auto
 			STANDARD_DEFENSE_AUGER = 740; // should be above
-			INTAKE_AUGER = 690;
+			INTAKE_AUGER = 895;
 			
 			UP_FAST_ZONE_VALUE = 1300;
 			
@@ -212,19 +212,19 @@ public class MullenatorAuger implements IAuger
 		{
 			if (dart.getFeedbackCount() < DOWN_FAST_ZONE_VALUE)
 			{
-				dart.goUp(DOWN_FAST_ZONE_SPEED);
+				dart.goDown(DOWN_FAST_ZONE_SPEED);
 			} else
 			{
-				dart.goUp(DOWN_SPEED);
+				dart.goDown(DOWN_SPEED);
 			}
 		} else
 		{
 			if (dart.getFeedbackCount() > DOWN_FAST_ZONE_VALUE)
 			{
-				dart.goUp(DOWN_FAST_ZONE_SPEED);
+				dart.goDown(DOWN_FAST_ZONE_SPEED);
 			} else
 			{
-				dart.goUp(DOWN_SPEED);
+				dart.goDown(DOWN_SPEED);
 			}
 		}
 	}

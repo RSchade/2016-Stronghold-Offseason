@@ -30,7 +30,13 @@ public class CANMotor implements ICANMotor
 	 */
 	public CANMotor(CANTalon motor, boolean invertDirection, IPIDFeedbackDevice device)
 	{
-		this(motor, invertDirection);
+		// Changes the motor controller to accept percentages expressed in
+		// decimals of the voltage of the system.
+		motor.changeControlMode(TalonControlMode.PercentVbus);
+		// motor.setInverted(invertDirection);
+		this.canMotor = motor;
+		this.invertDirection = invertDirection;
+		
 		this.device = device;
 
 		canMotor.setFeedbackDevice(device.whatPIDDevice());
@@ -97,7 +103,13 @@ public class CANMotor implements ICANMotor
 	 */
 	public double getSpeed()
 	{
-		return canMotor.get();
+		if(invertDirection)
+		{
+			return -canMotor.get();
+		} else
+		{
+			return canMotor.get();
+		}
 	}
 
 	@Override
@@ -128,6 +140,7 @@ public class CANMotor implements ICANMotor
 				canMotor.set(speed);
 			}
 		}
+		
 	}
 
 	@Override
@@ -161,6 +174,37 @@ public class CANMotor implements ICANMotor
 	
 	@Override
 	public void rampTo(double speed)
+	{
+		if (getSpeed() != speed)
+		{
+			double rampSpeed, initialSpeed = 0;
+
+			rampSpeed = getSpeed();
+			initialSpeed = rampSpeed;
+
+			for (int i = 0; i < steps; i++)
+			{
+				rampSpeed += (speed - initialSpeed) / steps;
+
+				setSpeed(speed);
+
+				try
+				{
+					Thread.sleep(2); // wait at least 2 milliseconds
+				} catch (InterruptedException e)
+				{
+					rampDown();
+					return;
+				}
+			}
+		} else
+		{
+			setSpeed(speed);
+		}
+	}
+	
+	@Override
+	public void rampTo(double speed, int steps)
 	{
 		if (getSpeed() != speed)
 		{
