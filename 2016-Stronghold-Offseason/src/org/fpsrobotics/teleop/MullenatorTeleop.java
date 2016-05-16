@@ -5,6 +5,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.fpsrobotics.actuators.ActuatorConfig;
+import org.fpsrobotics.actuators.drivetrain.DriveTrainProfile;
 import org.fpsrobotics.actuators.drivetrain.MullenatorDrive;
 import org.fpsrobotics.actuators.manipulator.ManipulatorPreset;
 import org.fpsrobotics.actuators.manipulator.MullenatorMechanism;
@@ -22,8 +23,6 @@ public class MullenatorTeleop implements ITeleopControl
 {
 	private ExecutorService executor;
 
-	private boolean autoGyroDriveActivated = false;
-
 	// Instances
 	private IGamepad gamepad;
 	private MullenatorDrive driveTrain;
@@ -38,8 +37,6 @@ public class MullenatorTeleop implements ITeleopControl
 	private SensorConfig sensors;
 
 	private ISemiAutonomousMode chevalSemiAuto;
-
-	private int shooterDelay = 5;
 
 	// Auto Teleop
 
@@ -75,21 +72,22 @@ public class MullenatorTeleop implements ITeleopControl
 				if (rightJoystick.getButtonValue(EJoystickButtons.ONE))
 				{
 					SmartDashboard.putBoolean("DRIVE TOGETHER", true);
-
-					SensorConfig.getInstance().getGyro().softResetCount();
+					
+					SensorConfig.getInstance().getGyro().hardResetCount();
 
 					while (rightJoystick.getButtonValue(EJoystickButtons.ONE))
 					{
 						double joyValue = rightJoystick.getY();
 
-						if (joyValue > 0)
+						// reversed joystick
+						if (joyValue < 0)
 						{
-							driveTrain.drive(joyValue, joyValue);
-							//driveTrain.driveForward(joyValue);
-						} else if (joyValue < 0)
+							//driveTrain.drive(joyValue, joyValue);
+							driveTrain.driveForward(joyValue);
+						} else if (joyValue > 0)
 						{
-							driveTrain.drive(joyValue, joyValue);
-							//driveTrain.driveBackward(joyValue);
+							//driveTrain.drive(joyValue, joyValue);
+							driveTrain.driveBackward(joyValue);
 						} else
 						{
 							driveTrain.stop();
@@ -134,102 +132,31 @@ public class MullenatorTeleop implements ITeleopControl
 
 		while (RobotStatus.isTeleop())
 		{
-			/*
-			// Drive straight
-			if (rightJoystick.getButtonValue(EJoystickButtons.ONE) && (gyroTask == null || gyroTask.isDone()))
-			{
-				gyroTask = executor.submit(() ->
-				{
-					autoGyroDriveActivated = true;
-					SmartDashboard.putBoolean("DRIVE TOGETHER", true);
-
-					SensorConfig.getInstance().getGyro().softResetCount();
-
-					while (rightJoystick.getButtonValue(EJoystickButtons.ONE))
-					{
-						double joyValue = -rightJoystick.getY(); // inverted joystick
-
-						if (joyValue > 0)
-						{
-							driveTrain.driveForward(joyValue);
-						} else if (joyValue < 0)
-						{
-							driveTrain.driveBackward(joyValue);
-						} else
-						{
-							driveTrain.stop();
-						}
-
-						try
-						{
-							Thread.sleep(5);
-						} catch (Exception e)
-						{
-							break;
-						}
-					}
-
-					autoGyroDriveActivated = false;
-					SmartDashboard.putBoolean("DRIVE TOGETHER", false);
-				});
-			}
-			*/
 
 			// Manual Shooter
-			if (gamepad.getButtonValue(EJoystickButtons.ONE) && (shooterTask == null || shooterTask.isDone()))
+			if (gamepad.getButtonValue(EJoystickButtons.ELEVEN) && (shooterTask == null || shooterTask.isDone()))
 			{
+				
 				shooterTask = executor.submit(() ->
 				{
 					while (gamepad.getButtonValue(EJoystickButtons.TWO))
 					{
 						mechanism.moveShooterDown();
-
-						try
-						{
-							Thread.sleep(shooterDelay);
-						} catch (Exception e)
-						{
-							break;
-						}
 					}
 
 					while (gamepad.getButtonValue(EJoystickButtons.FOUR))
 					{
 						mechanism.moveShooterUp();
-
-						try
-						{
-							Thread.sleep(shooterDelay);
-						} catch (Exception e)
-						{
-							break;
-						}
 					}
 
 					while (gamepad.getButtonValue(EJoystickButtons.FIVE))
 					{
 						mechanism.moveAugerUp();
-
-						try
-						{
-							Thread.sleep(shooterDelay);
-						} catch (Exception e)
-						{
-							break;
-						}
 					}
 
 					while (gamepad.getButtonValue(EJoystickButtons.SIX))
 					{
 						mechanism.moveAugerDown();
-
-						try
-						{
-							Thread.sleep(shooterDelay);
-						} catch (Exception e)
-						{
-							break;
-						}
 					}
 
 					mechanism.stopAuger();
@@ -241,7 +168,7 @@ public class MullenatorTeleop implements ITeleopControl
 			if ((gamepad.getButtonValue(EJoystickButtons.ONE) && gamepad.getButtonValue(EJoystickButtons.SEVEN))
 					|| gamepad.getButtonValue(EJoystickButtons.EIGHT) || (gamepad.getPOV() == 90)
 					|| (gamepad.getPOV() == 0) && (shotTask == null || shotTask.isDone()))
-			{
+			{		
 				shotTask = executor.submit(() ->
 				{
 					// Shoot low
@@ -249,24 +176,49 @@ public class MullenatorTeleop implements ITeleopControl
 					{
 						mechanism.goToPreset(ManipulatorPreset.SHOOT_LOW);
 						mechanism.shootLow();
+						
+						while(gamepad.getButtonValue(EJoystickButtons.SEVEN))
+						{
+							
+						}
 					} else if (gamepad.getButtonValue(EJoystickButtons.EIGHT)) // Shoot
 																				// high
 																				// corner
 					{
 						mechanism.goToPreset(ManipulatorPreset.SHOOT_HIGH_CORNER);
 						mechanism.shootHigh();
-					} else if (gamepad.getButtonValue(EJoystickButtons.EIGHT)) // Shoot
+						
+						while(gamepad.getButtonValue(EJoystickButtons.EIGHT))
+						{
+							
+						}
+					} else if (gamepad.getButtonValue(EJoystickButtons.FOUR)) // Shoot
 																				// high
 																				// center
 					{
 						mechanism.goToPreset(ManipulatorPreset.SHOOT_HIGH_CENTER);
 						mechanism.shootHigh();
+						
+						while(gamepad.getButtonValue(EJoystickButtons.FOUR))
+						{
+							
+						}
 					} else if (gamepad.getPOV() == 90) // manual high shot
 					{
 						mechanism.shootHigh();
+						
+						while(gamepad.getPOV() == 90)
+						{
+							
+						}
 					} else if (gamepad.getPOV() == 0) // manual low shot
 					{
 						mechanism.shootLow();
+						
+						while(gamepad.getPOV() == 0)
+						{
+							
+						}
 					}
 				});
 			}
@@ -279,14 +231,6 @@ public class MullenatorTeleop implements ITeleopControl
 					while (gamepad.getButtonValue(EJoystickButtons.THREE))
 					{
 						mechanism.intake();
-
-						try
-						{
-							Thread.sleep(5);
-						} catch (Exception e)
-						{
-							break;
-						}
 					}
 
 					mechanism.stopIntake();
@@ -405,16 +349,15 @@ public class MullenatorTeleop implements ITeleopControl
 					}
 				});
 			}
-
+			
 			try
 			{
-				Thread.sleep(150);
+				Thread.sleep(30);
 			} catch (InterruptedException e)
 			{
 
 			}
 		}
-
 	}
 
 	@Override

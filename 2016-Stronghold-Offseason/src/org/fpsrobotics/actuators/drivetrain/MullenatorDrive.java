@@ -4,6 +4,7 @@ import org.fpsrobotics.PID.IPIDFeedbackDevice;
 import org.fpsrobotics.actuators.DoubleMotor;
 import org.fpsrobotics.sensors.IAccelerometer;
 import org.fpsrobotics.sensors.IGyroscope;
+import org.fpsrobotics.sensors.SensorConfig;
 
 public class MullenatorDrive implements ITankDrive, IDriveSmooth
 {
@@ -20,6 +21,8 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 		this.rightDrive = rightDrive;
 		this.leftFeedbackDevice = leftDrive.getPIDFeedbackDevice();
 		this.rightFeedbackDevice = rightDrive.getPIDFeedbackDevice();
+		leftFeedbackDevice.reverseSensor(true);
+		rightFeedbackDevice.reverseSensor(false);
 		this.gyro = null;
 		this.gyroExists = false;
 		this.accel = null;
@@ -32,7 +35,10 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 		this.rightDrive = rightDrive;
 		this.leftFeedbackDevice = leftDrive.getPIDFeedbackDevice();
 		this.rightFeedbackDevice = rightDrive.getPIDFeedbackDevice();
+		leftFeedbackDevice.reverseSensor(true);
+		rightFeedbackDevice.reverseSensor(false);
 		this.gyroExists = true;
+		this.gyro = gyro;
 		this.accel = null;
 		this.accelerometerExists = false;
 	}
@@ -43,7 +49,10 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 		this.rightDrive = rightDrive;
 		this.leftFeedbackDevice = leftDrive.getPIDFeedbackDevice();
 		this.rightFeedbackDevice = rightDrive.getPIDFeedbackDevice();
+		leftFeedbackDevice.reverseSensor(true);
+		rightFeedbackDevice.reverseSensor(false);
 		this.accel = accel;
+		this.gyro = gyro;
 		this.gyroExists = true;
 		this.accelerometerExists = true;
 	}
@@ -51,42 +60,13 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 	double KpTeleop = 0.003;
 
 	@Override
-	public void driveForward(double speed)
+	public synchronized void driveForward(double speed)
 	{
 		if (speed < 0)
 		{
-			System.err.println("Negative Speed on Drive Forward");
 			speed = -speed;
 		}
-		
-		driveUsingGyro(speed, gyro.getHardCount() * KpTeleop);
-		
-		/*
-		if (gyroExists)
-		{
-			// Figure out why this works, and in what configuration of
-			// positive/negative signs
-			driveUsingGyro(speed, gyro.getHardCount() * KpTeleop);
-		} else
-		{
-			// drive(speed, speed);
-			stop(); // testing
-		}
-		*/
-	}
 
-	@Override
-	public void driveBackward(double speed)
-	{
-		if (speed < 0)
-		{
-			System.err.println("Negative Speed on Drive Backward");
-			speed = -speed;
-		}
-		
-		driveUsingGyro(-speed, -gyro.getHardCount() * KpTeleop);
-		
-		/*
 		if (gyroExists)
 		{
 			// Figure out why this works, and in what configuration of
@@ -94,10 +74,25 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 			driveUsingGyro(-speed, -gyro.getHardCount() * KpTeleop);
 		} else
 		{
-			// drive(-speed, -speed);
-			stop(); // testing
+			drive(-speed, -speed);
 		}
-		*/
+	}
+
+	@Override
+	public synchronized void driveBackward(double speed)
+	{
+		if (speed < 0)
+		{
+			speed = -speed;
+		}
+
+		if (gyroExists)
+		{
+			driveUsingGyro(speed, gyro.getHardCount() * KpTeleop);
+		} else
+		{
+			drive(speed, speed);
+		}
 	}
 
 	private final double m_sensitivity = 0.5;
@@ -133,14 +128,13 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 		}
 
 		drive(leftOutput, rightOutput);
-		//driveAtSpecifiedProfile(new double[] { leftOutput, rightOutput });
 	}
 
 	private double rampDownAngleDifference = 5;
 	private double slowSpeedTurning = 0.2; // Units need to be created
 
 	@Override
-	public void turnLeft(double speed, double angle)
+	public synchronized void turnLeft(double speed, double angle)
 	{
 		if (speed < 0)
 		{
@@ -153,11 +147,13 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 
 			drive(-speed, speed);
 
-			while (!(gyro.getSoftCount() >= (angle + rampDownAngleDifference)));
+			while (!(gyro.getSoftCount() >= (angle + rampDownAngleDifference)))
+				;
 
 			drive(-slowSpeedTurning, slowSpeedTurning);
 
-			while (!(gyro.getSoftCount() >= (angle + 0.5)));
+			while (!(gyro.getSoftCount() >= (angle + 0.5)))
+				;
 
 			stop();
 
@@ -168,7 +164,7 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 	}
 
 	@Override
-	public void turnRight(double speed, double angle)
+	public synchronized void turnRight(double speed, double angle)
 	{
 		if (speed < 0)
 		{
@@ -181,11 +177,13 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 
 			drive(speed, -speed);
 
-			while (!(gyro.getSoftCount() >= (angle - rampDownAngleDifference)));
+			while (!(gyro.getSoftCount() >= (angle - rampDownAngleDifference)))
+				;
 
 			drive(slowSpeedTurning, -slowSpeedTurning);
 
-			while (!(gyro.getSoftCount() >= (angle - 0.5)));
+			while (!(gyro.getSoftCount() >= (angle - 0.5)))
+				;
 
 			stop();
 
@@ -196,7 +194,7 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 	}
 
 	@Override
-	public void stop()
+	public synchronized void stop()
 	{
 		// leftDrive.stop();
 		// rightDrive.stop();
@@ -206,46 +204,78 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 
 	private DriveTrainProfile masterProfile = DriveTrainProfile.VELOCITY;
 
-	private double slowDistance = 200;
+	private double slowDistance = 5;
 	private double slowSpeedDriving = 0.2; // get units correct for velocity
 	private int steps = 7;
 
 	@Override
-	public void driveAtProfile(double[] profileSetting, DriveTrainProfile profile)
+	public synchronized void driveAtProfile(double[] profileSetting, DriveTrainProfile profile)
 	{
 		switch (profile)
 		{
 		case POSITION: // position response
 
+			// if we are going at .5 or below, 10 inches stopping distance
+			// Encoders slipping? Readings are not as accurate as they should be.
+
+			stop();
+
+			try
+			{
+				Thread.sleep(5);
+			} catch (InterruptedException e1)
+			{
+
+			}
+
 			leftFeedbackDevice.resetCount();
 			rightFeedbackDevice.resetCount();
 
+			SensorConfig.getInstance().getGyro().hardResetCount();
+
+			try
+			{
+				Thread.sleep(5);
+			} catch (InterruptedException e1)
+			{
+
+			}
+
+			slowDistance = profileSetting[0] / 2;
+
 			if (profileSetting[1] > 0 && profileSetting[0] > 0)
 			{
-				while (((leftFeedbackDevice.getCount() < profileSetting[0] - slowDistance)
-						|| (rightFeedbackDevice.getCount() < profileSetting[0] - slowDistance)))
+				while (((leftFeedbackDevice.getDistance() < (profileSetting[0] - slowDistance))
+						|| (rightFeedbackDevice.getDistance() < (profileSetting[0] - slowDistance))))
 				{
 					driveForward(profileSetting[1]);
 				}
 
-				while (((leftFeedbackDevice.getCount() < profileSetting[0] - 10)
-						|| (rightFeedbackDevice.getCount() < profileSetting[0] - 10)));
+				System.out.println("stopped " + leftFeedbackDevice.getDistance());
+
+				while (((leftFeedbackDevice.getDistance() < (profileSetting[0] - 2))
+						|| (rightFeedbackDevice.getDistance() < (profileSetting[0] - 2))))
+					;
 				{
 					driveForward(slowSpeedDriving);
 				}
 
 				stop();
 
+				System.out.println(
+						"reached end " + leftFeedbackDevice.getDistance() + " " + leftFeedbackDevice.getCount());
+
 			} else
 			{
-				while (((leftFeedbackDevice.getCount() > profileSetting[0] + slowDistance)
-						|| (rightFeedbackDevice.getCount() > profileSetting[0] + slowDistance)))
+				while (((leftFeedbackDevice.getDistance() > profileSetting[0] + slowDistance)
+						|| (rightFeedbackDevice.getDistance() > profileSetting[0] + slowDistance)))
 				{
 					driveBackward(profileSetting[1]);
 				}
 
-				while (((leftFeedbackDevice.getCount() > profileSetting[0] + 10)
-						|| (rightFeedbackDevice.getCount() > profileSetting[0] + 10)));
+				while (((leftFeedbackDevice.getDistance() > profileSetting[0] + 10)
+						|| (rightFeedbackDevice.getDistance() > profileSetting[0] + 10)))
+					;
 				{
 					driveBackward(slowSpeedDriving);
 				}
@@ -256,7 +286,7 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 			break;
 
 		case VELOCITY: // trapezoidal velocity response
-			
+
 			if (leftDrive.getSpeed() != profileSetting[0] || rightDrive.getSpeed() != profileSetting[1])
 			{
 				double leftSpeed, rightSpeed, initialLeft, initialRight = 0;
@@ -294,14 +324,37 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 
 		case ACCELERATION: // trapezoidal acceleration response
 
+			/*
 			if (accelerometerExists)
 			{
-				System.err.println("Acceleration mode not implemented");
+
+				double acceleration, initialAcceleration;
+
+				acceleration = accel.getResultant();
+				initialAcceleration = acceleration;
+
+				for (int i = 0; i < steps; i++)
+				{
+
+					leftDrive.setSpeed(leftSpeed);
+					rightDrive.setSpeed(rightSpeed);
+
+					try
+					{
+						Thread.sleep(3); // wait at least 3 milliseconds
+					} catch (InterruptedException e)
+					{
+						leftDrive.stop();
+						rightDrive.stop();
+					}
+				}
+
 			} else
 			{
 				System.err.println("derivative acceleration using encoder not implemented");
 			}
-
+			*/
+			
 			break;
 
 		case JERK:
@@ -345,7 +398,7 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 					Thread.sleep(3); // wait at least 3 milliseconds
 				} catch (InterruptedException e)
 				{
-					
+
 				}
 			}
 
@@ -366,19 +419,19 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 	}
 
 	@Override
-	public void setProfile(DriveTrainProfile profile)
+	public synchronized void setProfile(DriveTrainProfile profile)
 	{
 		masterProfile = profile;
 	}
 
 	@Override
-	public void driveAtSpecifiedProfile(double[] profileSetting)
+	public synchronized void driveAtSpecifiedProfile(double[] profileSetting)
 	{
 		driveAtProfile(profileSetting, masterProfile);
 	}
 
 	@Override
-	public void drive(double leftSpeed, double rightSpeed)
+	public synchronized void drive(double leftSpeed, double rightSpeed)
 	{
 		// leftDrive.setSpeed(leftSpeed); // implement auto straighten
 		// rightDrive.setSpeed(rightSpeed);

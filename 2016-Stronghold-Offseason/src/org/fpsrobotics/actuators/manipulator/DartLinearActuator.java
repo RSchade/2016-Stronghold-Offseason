@@ -8,7 +8,10 @@ public class DartLinearActuator implements ILinearActuator
 	private IMotor screwMotor;
 	private IPIDFeedbackDevice pot;
 	private boolean isUpAPositiveSlope = true;
-	int topLimit, bottomLimit, slowBuffer, steps;
+	private int topLimit, bottomLimit, slowBuffer, steps;
+	private double slowSpeed = 0.2;
+	private double slowSpeedFraction;
+	private boolean slowSpeedFractionEnabled = false;
 	
 	public DartLinearActuator(IMotor screwMotor, IPIDFeedbackDevice pot, boolean isUpAPositiveSlope, int bottomLimit, int topLimit, int slowBuffer, int rampSteps)
 	{
@@ -19,6 +22,31 @@ public class DartLinearActuator implements ILinearActuator
 		this.bottomLimit = bottomLimit;
 		this.slowBuffer = slowBuffer;
 		this.steps = rampSteps;
+	}
+	
+	public DartLinearActuator(IMotor screwMotor, IPIDFeedbackDevice pot, boolean isUpAPositiveSlope, int bottomLimit, int topLimit, int slowBuffer, int rampSteps, double slowSpeed)
+	{
+		this.screwMotor = screwMotor;
+		this.pot = pot;
+		this.isUpAPositiveSlope = isUpAPositiveSlope;
+		this.topLimit = topLimit;
+		this.bottomLimit = bottomLimit;
+		this.slowBuffer = slowBuffer;
+		this.steps = rampSteps;
+		this.slowSpeed = slowSpeed;
+	}
+	
+	public DartLinearActuator(IMotor screwMotor, IPIDFeedbackDevice pot, boolean isUpAPositiveSlope, int bottomLimit, int topLimit, int slowBuffer, int rampSteps, boolean slowSpeedFractionEnabled, double slowSpeedFraction)
+	{
+		this.screwMotor = screwMotor;
+		this.pot = pot;
+		this.isUpAPositiveSlope = isUpAPositiveSlope;
+		this.topLimit = topLimit;
+		this.bottomLimit = bottomLimit;
+		this.slowBuffer = slowBuffer;
+		this.steps = rampSteps;
+		this.slowSpeedFraction = slowSpeedFraction;
+		this.slowSpeedFractionEnabled = slowSpeedFractionEnabled;
 	}
 	
 	@Override
@@ -36,6 +64,11 @@ public class DartLinearActuator implements ILinearActuator
 	@Override
 	public void goToPosition(double speed, int position)
 	{
+		if(slowSpeedFractionEnabled)
+		{
+			slowSpeed = speed/slowSpeedFraction;
+		}
+		
 		if(isUpAPositiveSlope)
 		{
 			if(pot.getCount() > position)
@@ -47,7 +80,7 @@ public class DartLinearActuator implements ILinearActuator
 				
 				while(pot.getCount() > (position + 30) && !Thread.interrupted())
 				{
-					goDown(0.2);
+					goDown(slowSpeed);
 				}
 				
 				stop();
@@ -61,7 +94,7 @@ public class DartLinearActuator implements ILinearActuator
 				
 				while(pot.getCount() < (position - 30) && !Thread.interrupted())
 				{
-					goUp(0.2);
+					goUp(slowSpeed);
 				}
 				
 				stop();
@@ -73,11 +106,27 @@ public class DartLinearActuator implements ILinearActuator
 				while(pot.getCount() < (position - slowBuffer) && !Thread.interrupted())
 				{
 					goDown(speed);
+					
+					try
+					{
+						Thread.sleep(10);
+					} catch (InterruptedException e)
+					{
+						
+					}
 				}
 				
 				while(pot.getCount() < (position - 30) && !Thread.interrupted())
 				{
-					goDown(0.2);
+					goDown(slowSpeed);
+					
+					try
+					{
+						Thread.sleep(10);
+					} catch (InterruptedException e)
+					{
+						
+					}
 				}
 				
 				stop();
@@ -87,11 +136,27 @@ public class DartLinearActuator implements ILinearActuator
 				while(pot.getCount() > (position + slowBuffer) && !Thread.interrupted())
 				{
 					goUp(speed);
+					
+					try
+					{
+						Thread.sleep(10);
+					} catch (InterruptedException e)
+					{
+						
+					}
 				}
 				
 				while(pot.getCount() > (position + 30) && !Thread.interrupted())
 				{
-					goUp(0.2);
+					goUp(slowSpeed);
+					
+					try
+					{
+						Thread.sleep(10);
+					} catch (InterruptedException e)
+					{
+						
+					}
 				}
 				
 				stop();

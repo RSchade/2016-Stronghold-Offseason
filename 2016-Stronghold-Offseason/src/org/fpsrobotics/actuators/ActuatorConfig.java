@@ -179,7 +179,7 @@ public class ActuatorConfig
 			CANTalon shooterLifterTalon = new CANTalon(LINEAR_ACTUATOR_MOTOR);
 			
 			// Instantiate shooter lifter
-			shooterLifter = new DartLinearActuator(new CANMotor(shooterLifterTalon, true), shooterPotentiometer, false, LOWER_SHOOTER_LIMIT, UPPER_SHOOTER_LIMIT, 200, 3);
+			shooterLifter = new DartLinearActuator(new CANMotor(shooterLifterTalon, true), shooterPotentiometer, false, LOWER_SHOOTER_LIMIT, UPPER_SHOOTER_LIMIT, 200, 3, 0.3);
 			
 			// Instantiate the shooter
 			launcher = new MullenatorShooter(leftShooter, rightShooter, shooterLifter, shooterSolenoid, isAlpha);
@@ -197,7 +197,7 @@ public class ActuatorConfig
 			augerIntakeMotor = new CANTalon(AUGER_INTAKE_MOTOR);
 			augerLifterMotor = new CANTalon(AUGER_LIFTER_MOTOR);
 			
-			augerLinearActuator = new DartLinearActuator(new CANMotor(augerLifterMotor, false), augerPotentiometer, true, LOWER_AUGER_LIMIT, UPPER_AUGER_LIMIT, 300, 15);
+			augerLinearActuator = new DartLinearActuator(new CANMotor(augerLifterMotor, false), augerPotentiometer, true, LOWER_AUGER_LIMIT, UPPER_AUGER_LIMIT, 300, 15, true, 1.2);
 			
 			auger = new MullenatorAuger(augerLinearActuator, new CANMotor(augerIntakeMotor, false), isAlpha);
 		} catch (Exception e)

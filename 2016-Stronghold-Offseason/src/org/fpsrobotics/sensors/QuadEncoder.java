@@ -87,4 +87,11 @@ public class QuadEncoder implements IPIDFeedbackDevice
 		}
 	}
 
+	@Override
+	public void reverseSensor(boolean reversed)
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
 }

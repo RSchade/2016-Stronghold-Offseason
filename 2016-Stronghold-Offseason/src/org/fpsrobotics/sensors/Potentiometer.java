@@ -81,4 +81,11 @@ public class Potentiometer implements IPIDFeedbackDevice
 		}
 	}
 
+	@Override
+	public void reverseSensor(boolean reversed)
+	{
+		// TODO Auto-generated method stub
+		
+	}
+
 }

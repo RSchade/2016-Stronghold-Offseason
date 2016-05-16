@@ -12,7 +12,8 @@ import edu.wpi.first.wpilibj.CANTalon.FeedbackDevice;
 public class BuiltInCANTalonEncoder implements IPIDFeedbackDevice
 {
 	private CANTalon canMotor;
-
+	private boolean flip = false;
+	
 	public BuiltInCANTalonEncoder(CANTalon canMotor)
 	{
 		this.canMotor = canMotor;
@@ -24,7 +25,13 @@ public class BuiltInCANTalonEncoder implements IPIDFeedbackDevice
 	{
 		try
 		{
-			return canMotor.getEncPosition();
+			if(flip)
+			{
+				return (canMotor.getEncPosition() * -1);
+			} else
+			{
+				return canMotor.getEncPosition();
+			}
 		} catch (Exception e)
 		{
 			System.out.println("Encoder not mounted somewhere, proceed with caution");
@@ -61,7 +68,7 @@ public class BuiltInCANTalonEncoder implements IPIDFeedbackDevice
 	{
 		try
 		{
-			return canMotor.getClosedLoopError();
+			return canMotor.getClosedLoopError(); // does this need flip?
 		} catch (Exception e)
 		{
 			System.out.println("Encoder not mounted somewhere, proceed with caution");
@@ -74,7 +81,14 @@ public class BuiltInCANTalonEncoder implements IPIDFeedbackDevice
 	{
 		try
 		{
-			return canMotor.getEncVelocity();
+			if(flip)
+			{
+				return (canMotor.getEncVelocity() * -1);
+			} else
+			{
+				return canMotor.getEncVelocity();
+			}
+			
 		} catch (Exception e)
 		{
 			System.out.println("Encoder not mounted somewhere, proceed with caution");
@@ -87,10 +101,25 @@ public class BuiltInCANTalonEncoder implements IPIDFeedbackDevice
 	{
 		if (RobotStatus.isAlpha())
 		{
-			return (getCount() / 785.79);
+			//return (getCount() / 785.79);
+			return (getCount() * 0.0018703241895262);
 		} else
 		{
 			return (getCount() / 785.79);
+		}
+	}
+
+	@Override
+	public void reverseSensor(boolean reversed)
+	{
+		//canMotor.reverseSensor(reversed);
+		
+		if(reversed)
+		{
+			flip = true;
+		} else
+		{
+			flip = false;
 		}
 	}
 

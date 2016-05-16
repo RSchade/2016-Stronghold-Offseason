@@ -23,4 +23,6 @@ public interface IPIDFeedbackDevice
 	public CANTalon.FeedbackDevice whatPIDDevice();
 
 	public double getDistance();
+	
+	public void reverseSensor(boolean reversed);
 }

@@ -86,7 +86,10 @@ public class Robot extends SampleRobot
 		RobotStatus.setIsAuto(false);
 		RobotStatus.setIsTeleop(true);
 		
-		teleop.doTeleop();
+		executor.submit(() ->
+		{
+			teleop.doTeleop();
+		});
 	}
 
 	public void disabled()

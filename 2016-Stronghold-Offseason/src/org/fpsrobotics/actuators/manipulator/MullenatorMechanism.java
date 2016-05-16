@@ -189,9 +189,13 @@ public class MullenatorMechanism
 	public void intake()
 	{
 		auger.intake();
-		shooter.intake();
 
-		auger.moveToPreset(EAugerPresets.INTAKE);
+		executor.submit(() ->
+		{
+			auger.moveToPreset(EAugerPresets.INTAKE);
+		});
+		
+		shooter.intake();
 	}
 
 	public void stopIntake()

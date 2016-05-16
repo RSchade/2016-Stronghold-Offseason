@@ -34,4 +34,11 @@ public class BuiltInAccelerometer implements IAccelerometer
 	{
 		// This does nothing
 	}
+
+	@Override
+	public double getResultant()
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

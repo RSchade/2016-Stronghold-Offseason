@@ -36,4 +36,10 @@ public class AccelerometerNavX implements IAccelerometer
 		ahrs.resetDisplacement();
 	}
 
+	@Override
+	public double getResultant()
+	{
+		return Math.pow(Math.pow(getX(), 2) + Math.pow(getY(), 2), 0.5);
+	}
+
 }
