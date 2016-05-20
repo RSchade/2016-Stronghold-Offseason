@@ -1,5 +1,7 @@
 package org.fpsrobotics.teleop;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -30,13 +32,20 @@ public class MullenatorTeleop implements ITeleopControl
 	private IJoystick rightJoystick;
 	private MullenatorMechanism mechanism;
 
-	private Future<?> driveTask, shooterTask, intakeTask, presetTask, shotTask, lifterTask, semiAutoTask,
-			smartDashboardTask;
+	private Future<?> smartDashboardTask;
+	
+	private HashMap<String, Future<?>> futureTable;
+	private ITeleopTask driverPresetTask, driveTask, intakeTask, lifterTask, manualAugerTask, manualShooterTask, semiAutoTask, presetShooterTask; // implement lifter if needed
 
 	private ActuatorConfig actuators;
 	private SensorConfig sensors;
 
-	private ISemiAutonomousMode chevalSemiAuto;
+	private ISemiAutonomousMode chevalSemiAuto; // work on this later
+	
+	private EJoystickButtons shootLowButton, shootHighCornerButton, shootHighCenterButton, lowBarButton, standardDefenseButton, intakeButton, 
+							 lifterExtendButton, lifterRetractButton, raiseAugerButton, lowerAugerButton, raiseShooterButton, lowerShooterButton;
+	
+	private IJoystick presetJoystick;
 
 	// Auto Teleop
 
@@ -44,6 +53,8 @@ public class MullenatorTeleop implements ITeleopControl
 	{
 		executor = Executors.newFixedThreadPool(4); // Maximum 4 concurrent
 													// tasks
+		
+		futureTable = new HashMap<>();
 
 		// Instances
 		gamepad = SensorConfig.getInstance().getGamepad();
@@ -57,262 +68,79 @@ public class MullenatorTeleop implements ITeleopControl
 		sensors = SensorConfig.getInstance();
 
 		chevalSemiAuto = new AutonChevalDeFrise();
+		
+		lowBarButton = EJoystickButtons.EIGHT;
+		standardDefenseButton = EJoystickButtons.NINE;
+		intakeButton = EJoystickButtons.THREE;
+		lifterExtendButton =  EJoystickButtons.NINE;
+		lifterRetractButton = EJoystickButtons.TEN;
+		raiseAugerButton = EJoystickButtons.FIVE;
+		lowerAugerButton = EJoystickButtons.SIX;
+		raiseShooterButton =  EJoystickButtons.FOUR;
+		lowerShooterButton =  EJoystickButtons.TWO;
+		shootLowButton = EJoystickButtons.SEVEN;
+		shootHighCornerButton = EJoystickButtons.EIGHT;
+		shootHighCenterButton = EJoystickButtons.FOUR;
+		
+		presetJoystick = rightJoystick;
+				
+		driverPresetTask = new DriverPresetTask(executor, mechanism, leftJoystick, lowBarButton, standardDefenseButton);
+		driveTask = new DriveTask(executor, driveTrain, leftJoystick, rightJoystick);
+		intakeTask = new IntakeTask(executor, mechanism, gamepad, intakeButton);
+		lifterTask = new LifterTask(executor, mechanism, gamepad, lifterExtendButton, lifterRetractButton);
+		manualAugerTask = new ManualAugerTask(executor, mechanism, gamepad, raiseAugerButton, lowerAugerButton);
+		manualShooterTask = new ManualShooterTask(executor, mechanism, gamepad, raiseShooterButton, lowerShooterButton);
+		presetShooterTask = new PresetShooterTask(executor, mechanism, gamepad, shootLowButton, shootHighCornerButton, shootHighCenterButton);
 	}
-
-	double joystickCuttoff = 0.01;
 
 	@Override
 	public void doTeleop()
 	{
-		// Driving
-		driveTask = executor.submit(() ->
-		{
-			while (RobotStatus.isTeleop())
-			{
-				if (rightJoystick.getButtonValue(EJoystickButtons.ONE))
-				{
-					SmartDashboard.putBoolean("DRIVE TOGETHER", true);
-					
-					SensorConfig.getInstance().getGyro().hardResetCount();
-
-					while (rightJoystick.getButtonValue(EJoystickButtons.ONE))
-					{
-						double joyValue = rightJoystick.getY();
-
-						// reversed joystick
-						if (joyValue < 0)
-						{
-							//driveTrain.drive(joyValue, joyValue);
-							driveTrain.driveForward(joyValue);
-						} else if (joyValue > 0)
-						{
-							//driveTrain.drive(joyValue, joyValue);
-							driveTrain.driveBackward(joyValue);
-						} else
-						{
-							driveTrain.stop();
-						}
-
-						try
-						{
-							Thread.sleep(5);
-						} catch (Exception e)
-						{
-							
-						}
-					}
-					SmartDashboard.putBoolean("DRIVE TOGETHER", false);
-				}
-				
-				double leftDrive = leftJoystick.getY(), rightDrive = rightJoystick.getY();
-
-				if (Math.abs(leftDrive) > joystickCuttoff && Math.abs(rightDrive) > joystickCuttoff)
-				{
-					driveTrain.drive(leftDrive, rightDrive);
-				} else if (Math.abs(leftDrive) < joystickCuttoff && Math.abs(rightDrive) < joystickCuttoff)
-				{
-					driveTrain.stop();
-				} else if (Math.abs(leftDrive) < joystickCuttoff)
-				{
-					driveTrain.drive(0.0, rightDrive);
-				} else if (Math.abs(rightDrive) < joystickCuttoff)
-				{
-					driveTrain.drive(leftDrive, 0.0);
-				}
-
-				try
-				{
-					Thread.sleep(50);
-				} catch (Exception e1)
-				{
-
-				}
-			}
-		});
+		driveTask.doTask();
 
 		while (RobotStatus.isTeleop())
 		{
-
-			// Manual Shooter
-			if (gamepad.getButtonValue(EJoystickButtons.ELEVEN) && (shooterTask == null || shooterTask.isDone()))
+			if(gamepad.getButtonValue(EJoystickButtons.ONE))
 			{
+				if(gamepad.getButtonValue(raiseAugerButton) || gamepad.getButtonValue(lowerAugerButton) 
+						&& (futureTable.get("manualauger") == null || futureTable.get("manualauger").isDone()))
+				{
+					futureTable.put("manualauger", manualAugerTask.doTask());
+				}
 				
-				shooterTask = executor.submit(() ->
+				if(gamepad.getButtonValue(raiseShooterButton) || gamepad.getButtonValue(lowerShooterButton)
+						&& (futureTable.get("manualshooter") == null || futureTable.get("manualshooter").isDone()))
 				{
-					while (gamepad.getButtonValue(EJoystickButtons.TWO))
-					{
-						mechanism.moveShooterDown();
-					}
-
-					while (gamepad.getButtonValue(EJoystickButtons.FOUR))
-					{
-						mechanism.moveShooterUp();
-					}
-
-					while (gamepad.getButtonValue(EJoystickButtons.FIVE))
-					{
-						mechanism.moveAugerUp();
-					}
-
-					while (gamepad.getButtonValue(EJoystickButtons.SIX))
-					{
-						mechanism.moveAugerDown();
-					}
-
-					mechanism.stopAuger();
-					mechanism.stopShooter();
-				});
+					futureTable.put("manualshooter", manualShooterTask.doTask());
+				}
 			}
-
-			// Shoot
-			if ((gamepad.getButtonValue(EJoystickButtons.ONE) && gamepad.getButtonValue(EJoystickButtons.SEVEN))
-					|| gamepad.getButtonValue(EJoystickButtons.EIGHT) || (gamepad.getPOV() == 90)
-					|| (gamepad.getPOV() == 0) && (shotTask == null || shotTask.isDone()))
-			{		
-				shotTask = executor.submit(() ->
-				{
-					// Shoot low
-					if (gamepad.getButtonValue(EJoystickButtons.ONE) && gamepad.getButtonValue(EJoystickButtons.SEVEN))
-					{
-						mechanism.goToPreset(ManipulatorPreset.SHOOT_LOW);
-						mechanism.shootLow();
-						
-						while(gamepad.getButtonValue(EJoystickButtons.SEVEN))
-						{
-							
-						}
-					} else if (gamepad.getButtonValue(EJoystickButtons.EIGHT)) // Shoot
-																				// high
-																				// corner
-					{
-						mechanism.goToPreset(ManipulatorPreset.SHOOT_HIGH_CORNER);
-						mechanism.shootHigh();
-						
-						while(gamepad.getButtonValue(EJoystickButtons.EIGHT))
-						{
-							
-						}
-					} else if (gamepad.getButtonValue(EJoystickButtons.FOUR)) // Shoot
-																				// high
-																				// center
-					{
-						mechanism.goToPreset(ManipulatorPreset.SHOOT_HIGH_CENTER);
-						mechanism.shootHigh();
-						
-						while(gamepad.getButtonValue(EJoystickButtons.FOUR))
-						{
-							
-						}
-					} else if (gamepad.getPOV() == 90) // manual high shot
-					{
-						mechanism.shootHigh();
-						
-						while(gamepad.getPOV() == 90)
-						{
-							
-						}
-					} else if (gamepad.getPOV() == 0) // manual low shot
-					{
-						mechanism.shootLow();
-						
-						while(gamepad.getPOV() == 0)
-						{
-							
-						}
-					}
-				});
-			}
-
-			// Intake
-			if (gamepad.getButtonValue(EJoystickButtons.THREE) && (intakeTask == null || intakeTask.isDone()))
+			
+			if(gamepad.getButtonValue(EJoystickButtons.TWO)
+					&& (futureTable.get("presetshooter") == null || futureTable.get("presetshooter").isDone()))
 			{
-				intakeTask = executor.submit(() ->
-				{
-					while (gamepad.getButtonValue(EJoystickButtons.THREE))
-					{
-						mechanism.intake();
-					}
-
-					mechanism.stopIntake();
-				});
+				futureTable.put("presetshooter", presetShooterTask.doTask());
 			}
-
-			// Presets
-			if (rightJoystick.getButtonValue(EJoystickButtons.THREE)
-					|| rightJoystick.getButtonValue(EJoystickButtons.FOUR)
-							&& (presetTask == null || presetTask.isDone()))
+			
+			if(gamepad.getButtonValue(intakeButton)
+					&& (futureTable.get("intake") == null || futureTable.get("intake").isDone()))
 			{
-				presetTask = executor.submit(() ->
-				{
-					// Low bar
-					if (rightJoystick.getButtonValue(EJoystickButtons.THREE))
-					{
-						mechanism.goToPreset(ManipulatorPreset.LOW_BAR);
-					} else if (rightJoystick.getButtonValue(EJoystickButtons.FOUR)) // Standard
-																					// defense
-					{
-						mechanism.goToPreset(ManipulatorPreset.LOW_BAR);
-					}
-				});
+				futureTable.put("intake", intakeTask.doTask());
 			}
-
-			// Lifter
-			if (gamepad.getButtonValue(EJoystickButtons.NINE)
-					|| gamepad.getButtonValue(EJoystickButtons.TEN) && (lifterTask == null || lifterTask.isDone()))
+			
+			if(presetJoystick.getButtonValue(standardDefenseButton) || presetJoystick.getButtonValue(lowBarButton)
+					&& (futureTable.get("driverpreset") == null || futureTable.get("driverpreset").isDone()))
 			{
-				lifterTask = executor.submit(() ->
-				{
-					if (gamepad.getButtonValue(EJoystickButtons.NINE))
-					{
-						mechanism.extend();
-					} else if (gamepad.getButtonValue(EJoystickButtons.TEN))
-					{
-						mechanism.retract();
-						mechanism.goToPreset(ManipulatorPreset.LIFTER_AUGER_MOVEMENTS);
-					}
-				});
+				futureTable.put("driverpreset", driverPresetTask.doTask());
 			}
-
-			// SemiAutonomous Modes
-			if (leftJoystick.getButtonValue(EJoystickButtons.NINE) && (semiAutoTask == null || semiAutoTask.isDone()))
-			{
-				semiAutoTask = executor.submit(() ->
-				{
-					if (leftJoystick.getButtonValue(EJoystickButtons.NINE))
-					{
-						chevalSemiAuto.doSemiAutonomous();
-					}
-				});
-			}
-
+			
 			// Abort button
 			if (rightJoystick.getButtonValue(EJoystickButtons.ELEVEN))
 			{
 				executor.submit(() ->
 				{
-					if (shooterTask != null)
+					for(String id : futureTable.keySet())
 					{
-						shooterTask.cancel(true);
-					}
-
-					if (intakeTask != null)
-					{
-						intakeTask.cancel(true);
-					}
-
-					if (presetTask != null)
-					{
-						presetTask.cancel(true);
-					}
-
-					if (shotTask != null)
-					{
-						shotTask.cancel(true);
-					}
-
-					if (lifterTask != null)
-					{
-						lifterTask.cancel(true);
+						futureTable.get(id).cancel(true);
 					}
 				});
 
@@ -325,7 +153,7 @@ public class MullenatorTeleop implements ITeleopControl
 			// SmartDashboard update
 			if (smartDashboardTask == null || smartDashboardTask.isDone())
 			{
-				executor.submit(() ->
+				smartDashboardTask = executor.submit(() ->
 				{
 					// Shooter Pot Value
 					SmartDashboard.putNumber("Shooter Pot", actuators.getShooterPotentiometer().getCount());
@@ -363,34 +191,9 @@ public class MullenatorTeleop implements ITeleopControl
 	@Override
 	public void interruptTeleop()
 	{
-		if (shooterTask != null)
+		for(String id : futureTable.keySet())
 		{
-			shooterTask.cancel(true);
-		}
-
-		if (intakeTask != null)
-		{
-			intakeTask.cancel(true);
-		}
-
-		if (presetTask != null)
-		{
-			presetTask.cancel(true);
-		}
-
-		if (shotTask != null)
-		{
-			shotTask.cancel(true);
-		}
-
-		if (lifterTask != null)
-		{
-			lifterTask.cancel(true);
-		}
-
-		if (driveTask != null)
-		{
-			driveTask.cancel(true);
+			futureTable.get(id).cancel(true);
 		}
 	}
 }

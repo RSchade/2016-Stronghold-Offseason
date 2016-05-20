@@ -1,5 +1,7 @@
 package org.fpsrobotics.sensors;
 
+import java.util.Stack;
+
 import org.fpsrobotics.PID.IPIDFeedbackDevice;
 import org.fpsrobotics.robot.RobotStatus;
 
@@ -9,7 +11,7 @@ import edu.wpi.first.wpilibj.CANTalon.FeedbackDevice;
 /**
  * A class that implements the encoder connected to directly to the CAN Talon motor controller.
  */
-public class BuiltInCANTalonEncoder implements IPIDFeedbackDevice
+public class BuiltInCANTalonEncoder implements IEncoder
 {
 	private CANTalon canMotor;
 	private boolean flip = false;
@@ -18,6 +20,8 @@ public class BuiltInCANTalonEncoder implements IPIDFeedbackDevice
 	{
 		this.canMotor = canMotor;
 		canMotor.configEncoderCodesPerRev(2048);
+		
+		values = new Stack();
 	}
 
 	@Override
@@ -121,6 +125,75 @@ public class BuiltInCANTalonEncoder implements IPIDFeedbackDevice
 		{
 			flip = false;
 		}
+	}
+	
+	private Stack<Double> values;
+	
+	private double getAverageRate(int samples)
+	{
+		double average = 0;
+		double[] averageArray = new double[samples];
+		
+		if(values.empty())
+		{
+			for(int i = 0; i < samples; i++)
+			{
+				averageArray[i] = getRate();
+				values.push(averageArray[i]);
+			}
+			
+		} else
+		{
+			for(int i = 0; i < samples-1; i++)
+			{
+				averageArray[i] = values.pop();
+			}
+			
+			values.pop();
+			
+			for(int i = 0; i < samples-1; i++)
+			{
+				values.push(averageArray[i]);
+			}
+			
+			averageArray[samples-1] = getRate();
+			values.push(averageArray[samples-1]);
+		}
+		
+		for(double avgValues : averageArray)
+		{
+			average += avgValues;
+		}
+		
+		average /= averageArray.length;
+		
+		return average;
+	}
+
+	double initialValue, endValue;
+	long initialTime, endTime;
+	
+	@Override
+	public double getAcceleration() 
+	{
+		initialTime = System.nanoTime();
+		initialValue = getAverageRate(3);
+		
+		try {
+			Thread.sleep(1);
+		} catch (InterruptedException e) {
+		}
+		
+		endValue = getAverageRate(3);
+		endTime = System.nanoTime();
+		
+		return ((endValue - initialValue)/(endTime - initialTime));
+	}
+
+	@Override
+	public double getJerk() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }
