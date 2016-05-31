@@ -27,6 +27,7 @@ public class DriverPresetTask implements ITeleopTask {
 	@Override
 	public Future<?> doTask() {
 		return executor.submit(() -> {
+			
 			// Low bar
 			if (joystick.getButtonValue(lowBarButton)) {
 				mechanism.goToPreset(ManipulatorPreset.LOW_BAR);

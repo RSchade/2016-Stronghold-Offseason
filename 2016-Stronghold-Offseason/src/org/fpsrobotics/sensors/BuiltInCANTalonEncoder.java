@@ -21,7 +21,7 @@ public class BuiltInCANTalonEncoder implements IEncoder
 		this.canMotor = canMotor;
 		canMotor.configEncoderCodesPerRev(2048);
 		
-		values = new Stack();
+		values = new Stack<Double>();
 	}
 
 	@Override
@@ -138,7 +138,7 @@ public class BuiltInCANTalonEncoder implements IEncoder
 		{
 			for(int i = 0; i < samples; i++)
 			{
-				averageArray[i] = getRate();
+				averageArray[i] = getDistance();
 				values.push(averageArray[i]);
 			}
 			
@@ -156,7 +156,7 @@ public class BuiltInCANTalonEncoder implements IEncoder
 				values.push(averageArray[i]);
 			}
 			
-			averageArray[samples-1] = getRate();
+			averageArray[samples-1] = getDistance();
 			values.push(averageArray[samples-1]);
 		}
 		
@@ -171,21 +171,24 @@ public class BuiltInCANTalonEncoder implements IEncoder
 	}
 
 	double initialValue, endValue;
-	long initialTime, endTime;
+	double initialTime, endTime;
 	
 	@Override
 	public double getAcceleration() 
 	{
 		initialTime = System.nanoTime();
-		initialValue = getAverageRate(3);
+		initialValue = getDistance();
 		
 		try {
-			Thread.sleep(1);
+			Thread.sleep(125);
 		} catch (InterruptedException e) {
 		}
 		
-		endValue = getAverageRate(3);
+		endValue = getDistance();
 		endTime = System.nanoTime();
+		
+		endTime *= 0.000000001;
+		initialTime *= 0.000000001;
 		
 		return ((endValue - initialValue)/(endTime - initialTime));
 	}

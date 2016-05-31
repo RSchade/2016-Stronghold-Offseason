@@ -1,8 +1,8 @@
 package org.fpsrobotics.actuators.drivetrain;
 
-import org.fpsrobotics.PID.IPIDFeedbackDevice;
 import org.fpsrobotics.actuators.DoubleMotor;
 import org.fpsrobotics.sensors.IAccelerometer;
+import org.fpsrobotics.sensors.IEncoder;
 import org.fpsrobotics.sensors.IGyroscope;
 import org.fpsrobotics.sensors.SensorConfig;
 
@@ -10,7 +10,7 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 {
 	private DoubleMotor leftDrive, rightDrive;
 	private IGyroscope gyro;
-	private IPIDFeedbackDevice leftFeedbackDevice, rightFeedbackDevice;
+	private IEncoder leftFeedbackDevice, rightFeedbackDevice;
 	private IAccelerometer accel;
 	private boolean gyroExists = false;
 	private boolean accelerometerExists = false;
@@ -19,8 +19,8 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 	{
 		this.leftDrive = leftDrive;
 		this.rightDrive = rightDrive;
-		this.leftFeedbackDevice = leftDrive.getPIDFeedbackDevice();
-		this.rightFeedbackDevice = rightDrive.getPIDFeedbackDevice();
+		this.leftFeedbackDevice = (IEncoder) leftDrive.getPIDFeedbackDevice();
+		this.rightFeedbackDevice = (IEncoder) rightDrive.getPIDFeedbackDevice();
 		leftFeedbackDevice.reverseSensor(true);
 		rightFeedbackDevice.reverseSensor(false);
 		this.gyro = null;
@@ -33,8 +33,8 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 	{
 		this.leftDrive = leftDrive;
 		this.rightDrive = rightDrive;
-		this.leftFeedbackDevice = leftDrive.getPIDFeedbackDevice();
-		this.rightFeedbackDevice = rightDrive.getPIDFeedbackDevice();
+		this.leftFeedbackDevice = (IEncoder) leftDrive.getPIDFeedbackDevice();
+		this.rightFeedbackDevice = (IEncoder) rightDrive.getPIDFeedbackDevice();
 		leftFeedbackDevice.reverseSensor(true);
 		rightFeedbackDevice.reverseSensor(false);
 		this.gyroExists = true;
@@ -47,8 +47,8 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 	{
 		this.leftDrive = leftDrive;
 		this.rightDrive = rightDrive;
-		this.leftFeedbackDevice = leftDrive.getPIDFeedbackDevice();
-		this.rightFeedbackDevice = rightDrive.getPIDFeedbackDevice();
+		this.leftFeedbackDevice = (IEncoder) leftDrive.getPIDFeedbackDevice();
+		this.rightFeedbackDevice = (IEncoder) rightDrive.getPIDFeedbackDevice();
 		leftFeedbackDevice.reverseSensor(true);
 		rightFeedbackDevice.reverseSensor(false);
 		this.accel = accel;
@@ -323,21 +323,24 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 			break;
 
 		case ACCELERATION: // trapezoidal acceleration response
-
 			/*
-			if (accelerometerExists)
+			if (leftDrive.getSpeed() != profileSetting[0] || rightDrive.getSpeed() != profileSetting[1])
 			{
+				double leftAcceleration, rightAcceleration, initialLeft, initialRight = 0;
 
-				double acceleration, initialAcceleration;
+				leftAcceleration = leftFeedbackDevice.getAcceleration();
+				initialLeft = leftAcceleration;
 
-				acceleration = accel.getResultant();
-				initialAcceleration = acceleration;
+				rightAcceleration = rightFeedbackDevice.getAcceleration();
+				initialRight = rightAcceleration;
 
 				for (int i = 0; i < steps; i++)
 				{
+					leftAcceleration += (profileSetting[0] - initialLeft) / steps;
+					rightAcceleration += (profileSetting[1] - initialRight) / steps;
 
-					leftDrive.setSpeed(leftSpeed);
-					rightDrive.setSpeed(rightSpeed);
+					leftDrive.setSpeed(leftAcceleration);
+					rightDrive.setSpeed(rightAcceleration);
 
 					try
 					{
@@ -348,13 +351,12 @@ public class MullenatorDrive implements ITankDrive, IDriveSmooth
 						rightDrive.stop();
 					}
 				}
-
 			} else
 			{
-				System.err.println("derivative acceleration using encoder not implemented");
+				leftDrive.setSpeed(profileSetting[0]);
+				rightDrive.setSpeed(profileSetting[1]);
 			}
 			*/
-			
 			break;
 
 		case JERK:

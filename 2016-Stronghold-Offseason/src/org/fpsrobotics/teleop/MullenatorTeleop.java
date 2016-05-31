@@ -84,7 +84,7 @@ public class MullenatorTeleop implements ITeleopControl
 		
 		presetJoystick = rightJoystick;
 				
-		driverPresetTask = new DriverPresetTask(executor, mechanism, leftJoystick, lowBarButton, standardDefenseButton);
+		driverPresetTask = new DriverPresetTask(executor, mechanism, rightJoystick, lowBarButton, standardDefenseButton);
 		driveTask = new DriveTask(executor, driveTrain, leftJoystick, rightJoystick);
 		intakeTask = new IntakeTask(executor, mechanism, gamepad, intakeButton);
 		lifterTask = new LifterTask(executor, mechanism, gamepad, lifterExtendButton, lifterRetractButton);
@@ -101,19 +101,19 @@ public class MullenatorTeleop implements ITeleopControl
 		while (RobotStatus.isTeleop())
 		{
 			if(gamepad.getButtonValue(EJoystickButtons.ONE))
-			{
-				if(gamepad.getButtonValue(raiseAugerButton) || gamepad.getButtonValue(lowerAugerButton) 
+			{	
+				if((gamepad.getButtonValue(raiseAugerButton) || gamepad.getButtonValue(lowerAugerButton)) 
 						&& (futureTable.get("manualauger") == null || futureTable.get("manualauger").isDone()))
 				{
 					futureTable.put("manualauger", manualAugerTask.doTask());
 				}
 				
-				if(gamepad.getButtonValue(raiseShooterButton) || gamepad.getButtonValue(lowerShooterButton)
+				if((gamepad.getButtonValue(raiseShooterButton) || gamepad.getButtonValue(lowerShooterButton))
 						&& (futureTable.get("manualshooter") == null || futureTable.get("manualshooter").isDone()))
 				{
 					futureTable.put("manualshooter", manualShooterTask.doTask());
 				}
-			}
+			} 
 			
 			if(gamepad.getButtonValue(EJoystickButtons.TWO)
 					&& (futureTable.get("presetshooter") == null || futureTable.get("presetshooter").isDone()))
@@ -127,7 +127,7 @@ public class MullenatorTeleop implements ITeleopControl
 				futureTable.put("intake", intakeTask.doTask());
 			}
 			
-			if(presetJoystick.getButtonValue(standardDefenseButton) || presetJoystick.getButtonValue(lowBarButton)
+			if((presetJoystick.getButtonValue(standardDefenseButton) || presetJoystick.getButtonValue(lowBarButton))
 					&& (futureTable.get("driverpreset") == null || futureTable.get("driverpreset").isDone()))
 			{
 				futureTable.put("driverpreset", driverPresetTask.doTask());

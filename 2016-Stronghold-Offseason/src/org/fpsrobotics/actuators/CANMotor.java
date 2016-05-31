@@ -217,7 +217,7 @@ public class CANMotor implements ICANMotor
 			{
 				rampSpeed += (speed - initialSpeed) / steps;
 
-				setSpeed(speed);
+				setSpeed(rampSpeed);
 
 				try
 				{

@@ -45,8 +45,20 @@ public class MullenatorMechanism
 		switch (preset)
 		{
 		case LOW_BAR:
+			executor.submit(() ->
+			{
+				try
+				{
+					Thread.sleep(200);
+				} catch (Exception e)
+				{
+					
+				}
+				auger.moveToBottomLimit();
+			});
+			
 			shooter.moveToPreset(EShooterPresets.LOW_BAR);
-			auger.moveToBottomLimit();
+			
 			break;
 		case SHOOT_HIGH_CORNER:
 			if (auger.getPosition() < auger.FOURTY_KAI)

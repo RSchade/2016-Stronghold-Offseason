@@ -173,7 +173,7 @@ public class ActuatorConfig
 			leftShooterMotor = new CANTalon(LEFT_SHOOTER_MOTOR);
 			rightShooterMotor = new CANTalon(RIGHT_SHOOTER_MOTOR);
 
-			leftShooter = new CANMotor(leftShooterMotor, false);
+			leftShooter = new CANMotor(leftShooterMotor, true);
 			rightShooter = new CANMotor(rightShooterMotor, false);
 			
 			CANTalon shooterLifterTalon = new CANTalon(LINEAR_ACTUATOR_MOTOR);

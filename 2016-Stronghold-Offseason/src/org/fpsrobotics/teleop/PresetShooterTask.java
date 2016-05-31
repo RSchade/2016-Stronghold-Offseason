@@ -29,6 +29,11 @@ public class PresetShooterTask implements ITeleopTask
 	public Future<?> doTask() {
 		return executor.submit(() ->
 		{
+			if(gamepad.getButtonValue(EJoystickButtons.ONE))
+			{
+				return;
+			}
+			
 			if(gamepad.getButtonValue(shootLowButton))
 			{
 				mechanism.goToPreset(ManipulatorPreset.SHOOT_LOW);
